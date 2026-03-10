@@ -158,11 +158,9 @@ async def ultimo(request: Request):
     print(horario_recebido)
     if horario_recebido == None or ultimo_webhook == None:
         return templates.TemplateResponse(
-        "ultimoVazio.html",
+        "ultimo.html",
         {
             "request": request,
-            "horario_recebimento": "Nenhum payload recebido na iteração atual",
-            "ultimo": "Aguardando recebimento de um payload",
             "timestamp_atual": timestamp_atual
         }
     )

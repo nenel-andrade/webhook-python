@@ -4,7 +4,7 @@
 
 {% block content %}
     <h1>📥Ultimo webhook recebido</h1>
-    <p>Horario do recebimento: <strong>{{ horario_recebimento }}</strong></p>
-    <p>Ultima ação recebida: <strong>{{ultima_acao}}</strong></p>
-    <pre><code>{{ultimo}}</code></pre>
+    <p>Horario do recebimento: <strong>{{ horario_recebimento | default("Nenhum webhook recebido")}}</strong></p>
+    <p>Ultima ação recebida: <strong>{{ultima_acao | default("Nenhuma ação recebida")}}</strong></p>
+    <pre><code>{{ultimo | default("Nenhum webhook recebido ate o momento, aguardando recebimento")}}</code></pre>
 {% endblock %}
