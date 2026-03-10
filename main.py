@@ -139,7 +139,7 @@ async def webhook(request: Request):
     except json.JSONDecodeError:
         return PlainTextResponse("Payload inválido", status_code=400)
     
-@app.get("/stats", response_class=HTMLResponse)
+@app.get("/contadores", response_class=HTMLResponse)
 async def stats(request: Request):
     timestamp_atual = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
     return templates.TemplateResponse(
