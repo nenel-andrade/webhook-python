@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+
+{% block title %}📥Ultimo Webhook{% endblock %}
+
+{% block content %}
+    <h1>📥Ultimo webhook recebido</h1>
+    <p>Horario do recebimento: <strong>{{ horario_recebimento }}</strong></p>
+    <pre><code>{{ultimo}}</code></pre>
+{% endblock %}

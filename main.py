@@ -1,13 +1,14 @@
+import unicodedata
+import json
 from fastapi import FastAPI, Request
 from fastapi import Request
 from fastapi.responses import PlainTextResponse
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-import json
 from pathlib import Path
 from datetime import datetime
-import unicodedata
-import html
+
+
  
 """ 
 Abrir o webhook
@@ -155,13 +156,24 @@ async def stats(request: Request):
 async def ultimo(request: Request):
     timestamp_atual = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
     print(horario_recebido)
-    return templates.TemplateResponse(
-        "ultimo.html",
+    if horario_recebido == None or ultimo_webhook == None:
+        return templates.TemplateResponse(
+        "ultimoVazio.html",
         {
             "request": request,
-            "horario_recebimento": horario_recebido,
-            "ultimo": ultimo_webhook["payload"],
-            "ultima_acao":ultimo_webhook["acao"],
+            "horario_recebimento": "Nenhum payload recebido na iteração atual",
+            "ultimo": "Aguardando recebimento de um payload",
             "timestamp_atual": timestamp_atual
         }
     )
+    else:
+        return templates.TemplateResponse(
+            "ultimo.html",
+            {
+                "request": request,
+                "horario_recebimento": horario_recebido,
+                "ultimo": ultimo_webhook["payload"],
+                "ultima_acao":ultimo_webhook["acao"],
+                "timestamp_atual": timestamp_atual
+            }
+        )
