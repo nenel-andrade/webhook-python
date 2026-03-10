@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block title %}📊 Estatísticas{% endblock %}
+
+{% block content %}
+    <h1>📊 Estatísticas do Webhook</h1>
+    
+    <p><strong>Total de requisições (geral):</strong> {{ contadores.contadorGeral }}</p>
+    <p><strong>Nesta sessão:</strong> {{ contador_sessao_atual }}</p>
+    
+    <p>Aprovados: <strong>{{ contadores.aprovado }}</strong></p>
+    <p>Reprovados: <strong>{{ contadores.reprovado }}</strong></p>
+    <p>Derivações: <strong>{{ contadores.derivacao }}</strong></p>
+    <p>Pendências: <strong>{{ contadores.pendencia }}</strong></p>
+    <p>Não mapeados: <strong>{{ contadores.nao_mapeado }}</strong></p>
+{% endblock %}
