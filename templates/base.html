@@ -3,53 +3,106 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
     {% block head %}
     <title>{% block title %}Webhook Contador{% endblock %}</title>
+    
     <style>
-        body {
-            background-color: #151e2c;
-            color: #c9d1d9;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --text-primary: #c9d1d9;
+            --text-secondary: #8b949e;
+            --accent: #58a6ff;
+            --success: #3fb950;
+            --danger: #f44336;
+            --warning: #ff9800;
+            --border: #30363d;
+        }
+
+        * {
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
         }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
         header {
-            background-color: #161b22;
-            padding: 1rem;
-            border-bottom: 1px solid #30363d;
+            background-color: var(--bg-secondary);
+            padding: 1rem 2rem;
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
         }
+
+        nav {
+            display: flex;
+            gap: 2rem;
+            justify-content: center;
+        }
+
         nav a {
-            color: #58a6ff;
-            margin-right: 1rem;
+            color: var(--accent);
             text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
         }
+
         nav a:hover {
+            color: #79c0ff;
             text-decoration: underline;
         }
+
         main {
             max-width: 1200px;
             margin: 2rem auto;
-            padding: 0 1rem;
+            padding: 0 1.5rem;
+            padding-bottom: 120px; /* espaço para footer fixo */
         }
-        h1 {
-            color: #88cf94;
+
+        h1, h2 {
+            color: var(--success);
+            margin-bottom: 1rem;
         }
+
         pre {
-            background: #161b22;
-            padding: 1rem;
-            border-radius: 6px;
+            background: var(--bg-secondary);
+            padding: 1.5rem;
+            border-radius: 8px;
             overflow-x: auto;
+            white-space: pre-wrap;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.95rem;
+            border: 1px solid var(--border);
         }
+
         footer {
             position: fixed;
             bottom: 0;
-            width: 100%;
-            height: 50px;
-            text-align: center;
+            left: 0;
+            right: 0;
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border);
             padding: 1rem;
-            background: #161b22;
-            border-top: 1px solid #30363d;
-            color: #8b949e;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            z-index: 999;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: var(--accent);
+            display: none;
         }
     </style>
     {% endblock %}
@@ -58,21 +111,50 @@
     <header>
         <nav>
             <a href="/contadores">Contadores</a>
+            <a href="/estatisticas">Estatísticas</a>
             <a href="/ultimo">Último Webhook</a>
-            <a href="/stats">Estatisticas</a>
-
         </nav>
     </header>
 
     <main>
+        <div id="loading" class="loading">Atualizando dados...</div>
+        
         {% block content %}
         {% endblock %}
     </main>
 
-    <footer class="fixed-footer">
+    <footer>
         {% block footer %}
         <p>Webhook Contador • Última atualização: {{ timestamp_atual | default("não disponível") }}</p>
         {% endblock %}
     </footer>
+
+    <!-- SSE para auto-update -->
+    <!--<script>
+        console.log("SSE script carregado - iniciando EventSource");
+        const eventSource = new EventSource('/events');
+        eventSource.onmessage = function(event) {
+            console.log('Evento SSE recebido:', event.data);
+            // Recarrega a página (simples e funcional)
+            //location.reload();
+            // Alternativa: atualizar só o main sem reload (descomente se quiser)
+            fetch(window.location.pathname)
+                .then(response => response.text())
+                .then(html => {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    document.querySelector('main').innerHTML = doc.querySelector('main').innerHTML;
+                })
+                .catch(err => console.error('Erro ao atualizar:', err));
+        };
+
+        eventSource.onerror = function(error) {
+            console.error('Erro no SSE:', error);
+            eventSource.close();
+        };
+    </script>-->
+
+    {% block extra_js %}
+    {% endblock %}
 </body>
 </html>

@@ -1,15 +1,21 @@
 import unicodedata
 import json
+from asyncio import Queue
+from collections import deque
+from datetime import datetime
 from fastapi import FastAPI, Request
 from fastapi import Request
 from fastapi.responses import PlainTextResponse
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
+from fastapi.middleware.cors import CORSMiddleware
 from pathlib import Path
-from datetime import datetime
+from sse_starlette.sse import EventSourceResponse
 
+from api import estatisticas_router
 
- 
+# TODO PRIORITARIO LIMPAR MAIN QUEBRANDO EM MAIS ARQUIVOS
+
 """ 
 Abrir o webhook
 uvicorn main:app --reload
@@ -21,7 +27,17 @@ ngrok http 8000
 app = FastAPI(
     title="Webhook Contador",
     description="Contador de ações de webhook",
-    version="0.1.0"
+    version="0.2.0"
+)
+app.include_router(estatisticas_router)
+
+# TODO encontar uma maneira de deixar o url do ngrok visivel no front, pelomenos no server local
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # ou especifique seu ngrok URL
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 templates = Jinja2Templates(directory="templates")
@@ -32,6 +48,8 @@ ARQUIVOCONTADORES = Path("contadores.json")
 ultimo_webhook = None
 horario_recebido = None
 
+
+client_queues = []
 campos_acao = ["action_name","acao_final"]
 contador_sessao_atual = 0
 contadores ={
@@ -88,6 +106,14 @@ def detectarAcao(acaoRecebida: str)-> str:
     return "nao_mapeado"
 
 
+# TODO criar a função de calculo de porcentagens
+def calcular_porcentagens():
+    tipos_mapeados = ["aprovado", "reprovado", "derivacao", "pendencia"]
+    for i in tipos_mapeados:
+        if i in contadores.items():
+            print(i)
+
+
 #------------------- Funçoes auxiliares -------------------
 #Remove acentos do texto enviado
 def remover_acentos(s: str) -> str:
@@ -103,13 +129,35 @@ def capitalizarAcao(texto: str) -> str:
         return " ".join(capitalizadas)
     return "Texto inválido"
 
-
-
 carregarContadores()
+calcular_porcentagens()
+
+# TODO fazer o reload automatico funcionar
+@app.get("/events")
+async def sse_events(request: Request):
+    print("Novo cliente SSE conectado")
+    queue = Queue()
+    client_queues.append(queue)
+    print(f"Clientes conectados agora: {len(client_queues)}")
+
+    async def event_generator():
+        try:
+            while True:
+                message = await queue.get()
+                print(f"Enviando SSE: {message}")
+                yield {"event": "update", "data": message}
+                queue.task_done()
+        finally:
+            client_queues.remove(queue)
+            print("Cliente SSE desconectado")
+    
+    return EventSourceResponse(event_generator())
+
 
 @app.post("/webhook", response_class=PlainTextResponse)
 async def webhook(request: Request):
     global ARQUIVOCONTADORES
+    global client_queues
     global horario_recebido
     global contador_sessao_atual
     global ultimo_webhook
@@ -129,6 +177,8 @@ async def webhook(request: Request):
             "acao": capitalizarAcao(acaoEncontrada),
             "payload": body
         }
+        for q in client_queues:
+            await q.put(ultimo_webhook["payload"])
         print(f"Webhook recebido às: {timestamp}")
         print(body)
         print(f"Texto extraído: '{textoAcao}'")
@@ -143,7 +193,7 @@ async def webhook(request: Request):
 async def stats(request: Request):
     timestamp_atual = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
     return templates.TemplateResponse(
-        "stats.html",
+        "contadoresPage.html",
         {
             "request": request,
             "contadores": contadores,
@@ -151,11 +201,24 @@ async def stats(request: Request):
             "timestamp_atual": timestamp_atual
         }
     )
+# @app.get("/estatisticas", response_class=HTMLResponse)
+# async def stats(request: Request):
+#     timestamp_atual = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+#     return templates.TemplateResponse(
+#         "estatisticas.html",
+#         {
+#             "request": request,
+#             "contadores": contadores,
+#             "contador_sessao_atual": contador_sessao_atual,
+#             "timestamp_atual": timestamp_atual
+#         }
+#     )
 
 @app.get("/ultimo",response_class=HTMLResponse)
 async def ultimo(request: Request):
+    
+    
     timestamp_atual = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-    print(horario_recebido)
     if horario_recebido == None or ultimo_webhook == None:
         return templates.TemplateResponse(
         "ultimo.html",
@@ -165,12 +228,13 @@ async def ultimo(request: Request):
         }
     )
     else:
+        payload_pretty = json.dumps(ultimo_webhook["payload"], indent=2, ensure_ascii=False)
         return templates.TemplateResponse(
             "ultimo.html",
             {
                 "request": request,
                 "horario_recebimento": horario_recebido,
-                "ultimo": ultimo_webhook["payload"],
+                "ultimo": payload_pretty,
                 "ultima_acao":ultimo_webhook["acao"],
                 "timestamp_atual": timestamp_atual
             }
