@@ -1,12 +1,9 @@
 from pathlib import Path
-from datetime import datetime
-from asyncio import Queue
-from typing import Dict, Any, List
+from fastapi.templating import Jinja2Templates
 
-ARQUIVOCONTADORES = Path("contadores.json")
+ARQUIVOCONTADORES = Path("json/contadores.json")
 
-ultimo_webhook = None
-horario_recebido = None
+templates = Jinja2Templates(directory="templates")
 
 client_queues = []
 campos_acao = ["action_name","acao_final"]

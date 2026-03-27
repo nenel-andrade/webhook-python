@@ -1,10 +1,21 @@
 from fastapi import APIRouter, Request
-from fastapi.responses import PlainTextResponse
-from ..core.utils import extrairAcao, detectarAcao, salvarContadores
-from ..core.state import contadores, contador_sessao_atual, ultimo_webhook, client_queues
+from fastapi.responses import PlainTextResponse, HTMLResponse
+from core.utils import contador_sessao_atual
+from core.state import  client_queues, templates, contadores, contador_sessao_atual
+from api.webhook import contador_somar
+from datetime import datetime
 
-@app.get("/contadores", response_class=HTMLResponse)
+
+router = APIRouter(
+    prefix="/contadores",
+    tags=["contadores"],
+    responses={404: {"description": "Não encontrado"}}
+)
+
+
+@router.get("/", response_class=HTMLResponse)
 async def stats(request: Request):
+    print("cessao", contador_somar)
     timestamp_atual = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
     return templates.TemplateResponse(
         "contadoresPage.html",

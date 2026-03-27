@@ -1,8 +1,18 @@
 import unicodedata
-#from .state import contadores, acoes_lista, campos_acao  # import relativo
+import json
+from .state import contadores, acoes_lista, campos_acao ,contador_sessao_atual # import relativo
+from core.state import ARQUIVOCONTADORES
 
 def remover_acentos(s: str) -> str:
     return "".join(c for c in unicodedata.normalize("NFD", s) if unicodedata.category(c) != "Mn")
+
+def contador_atual():
+    global contador_sessao_atual 
+    if contador_sessao_atual == 0:
+        print("Contador iniciado")
+    else:
+        print("contador somado")
+        contador_sessao_atual += 1
 
 #captaliza a letra inicial do texto enviado
 def capitalizarAcao(texto: str) -> str:
@@ -35,9 +45,8 @@ def extrairAcao(body: dict) -> str:
     for campo in campos_acao:
         valor = body.get(campo)
         if isinstance(valor, str) and valor.strip():
-            valor = valor.lower()
-            return valor
-        return None
+            return valor.lower()
+    return ""   # ou "não encontrado", ou string vazia
 
 #Compara o texto recebido com a lista de possiveis ações
 def detectarAcao(acaoRecebida: str)-> str:
