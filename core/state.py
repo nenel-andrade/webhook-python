@@ -1,6 +1,8 @@
 from pathlib import Path
 from fastapi.templating import Jinja2Templates
 
+ngrok_url = "Aguardando Ngrok..."
+
 ARQUIVOCONTADORES = Path("json/contadores.json")
 
 templates = Jinja2Templates(directory="templates")

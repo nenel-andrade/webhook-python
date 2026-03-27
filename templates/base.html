@@ -129,32 +129,6 @@
         <p>Webhook Contador • Última atualização: {{ timestamp_atual | default("não disponível") }}</p>
         {% endblock %}
     </footer>
-
-    <!-- SSE para auto-update -->
-    <!--<script>
-        console.log("SSE script carregado - iniciando EventSource");
-        const eventSource = new EventSource('/events');
-        eventSource.onmessage = function(event) {
-            console.log('Evento SSE recebido:', event.data);
-            // Recarrega a página (simples e funcional)
-            //location.reload();
-            // Alternativa: atualizar só o main sem reload (descomente se quiser)
-            fetch(window.location.pathname)
-                .then(response => response.text())
-                .then(html => {
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(html, 'text/html');
-                    document.querySelector('main').innerHTML = doc.querySelector('main').innerHTML;
-                })
-                .catch(err => console.error('Erro ao atualizar:', err));
-        };
-
-        eventSource.onerror = function(error) {
-            console.error('Erro no SSE:', error);
-            eventSource.close();
-        };
-    </script>-->
-
     {% block extra_js %}
     {% endblock %}
 </body>

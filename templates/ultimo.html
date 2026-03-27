@@ -1,10 +1,54 @@
 {% extends "base.html" %}
 
-{% block title %}📥Ultimo Webhook{% endblock %}
+{% block title %}📥 Ultimo Webhook{% endblock %}
 
 {% block content %}
-    <h1>📥Ultimo webhook recebido</h1>
-    <p>Horario do recebimento: <strong>{{ horario_recebimento | default("Nenhum webhook recebido")}}</strong></p>
-    <p>Ultima ação recebida: <strong>{{ultima_acao | default("Nenhuma ação recebida")}}</strong></p>
-    <pre><code>{{ultimo | default("Nenhum webhook recebido ate o momento, aguardando recebimento")}}</code></pre>
+<div id="webhook-container">
+    <h1>📥 Ultimo webhook recebido</h1>
+    <p>Horário do recebimento: <strong>{{ horario_recebimento | default("Nenhum webhook recebido") }}</strong></p>
+    <p>Última ação recebida: <strong>{{ ultima_acao | default("Nenhuma ação recebida") }}</strong></p>
+    
+    <pre><code id="json-block">{{ ultimo | default("Nenhum webhook recebido até o momento, aguardando recebimento...") }}</code></pre>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Conecta na rota de streaming do FastAPI
+    const eventSource = new EventSource('/stream');
+
+    eventSource.onmessage = function(event) {
+        console.log('Novo webhook recebido ao vivo!');
+        
+        // Busca a página atualizada em segundo plano
+        fetch(window.location.href)
+            .then(response => response.text())
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                
+                // Pega a div antiga e a nova
+                const mainContent = document.getElementById('webhook-container');
+                const newMainContent = doc.getElementById('webhook-container');
+                
+                if(mainContent && newMainContent) {
+                    // Substitui o conteúdo suavemente
+                    mainContent.innerHTML = newMainContent.innerHTML;
+                    
+                    // Efeito visual: pisca o fundo do código para verde rapidamente
+                    const codeBlock = document.getElementById('json-block');
+                    if(codeBlock) {
+                        // Usando as cores do seu tema dark!
+                        codeBlock.parentElement.style.transition = "background-color 0.4s ease";
+                        codeBlock.parentElement.style.backgroundColor = "var(--success)";
+                        
+                        setTimeout(() => {
+                            codeBlock.parentElement.style.backgroundColor = "var(--bg-secondary)";
+                        }, 600);
+                    }
+                }
+            })
+            .catch(err => console.error('Erro ao atualizar dados:', err));
+    };
+</script>
 {% endblock %}

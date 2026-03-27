@@ -1,10 +1,8 @@
 from fastapi import APIRouter, Request
-from fastapi.responses import PlainTextResponse, HTMLResponse
-from core.utils import contador_sessao_atual
-from core.state import  client_queues, templates, contadores, contador_sessao_atual
-from api.webhook import contador_somar
+from fastapi.responses import HTMLResponse
+from core.state import client_queues, templates, contadores
+from core import state # <-- Importamos o módulo inteiro aqui também!
 from datetime import datetime
-
 
 router = APIRouter(
     prefix="/contadores",
@@ -12,17 +10,19 @@ router = APIRouter(
     responses={404: {"description": "Não encontrado"}}
 )
 
-
 @router.get("/", response_class=HTMLResponse)
 async def stats(request: Request):
-    print("cessao", contador_somar)
+    # Lemos direto do state para pegar o valor exato daquele milissegundo
+    print("Sessão atual:", state.contador_sessao_atual) 
+    
     timestamp_atual = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    
     return templates.TemplateResponse(
         "contadoresPage.html",
         {
             "request": request,
-            "contadores": contadores,
-            "contador_sessao_atual": contador_sessao_atual,
+            "contadores": contadores, # Dicionários atualizam sozinhos, não tem problema!
+            "contador_sessao_atual": state.contador_sessao_atual, # Passamos o valor fresco pro Jinja
             "timestamp_atual": timestamp_atual
         }
     )

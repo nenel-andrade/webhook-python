@@ -1,10 +1,9 @@
 from fastapi import APIRouter, Request
 from fastapi.responses import PlainTextResponse, HTMLResponse
 from core.utils import extrairAcao, detectarAcao, capitalizarAcao
-from core.state import contadores, client_queues, templates
-from core.state import contador_sessao_atual as contador_somar
+from core.state import contadores, client_queues, templates 
+from core import state # <-- IMPORTE O MÓDULO INTEIRO
 from datetime import datetime
-from fastapi.templating import Jinja2Templates
 import json
 
 router = APIRouter(
@@ -18,7 +17,6 @@ horario_recebido = None
 async def webhook(request: Request):
     global client_queues
     global horario_recebido
-    global contador_somar
     global ultimo_webhook
     timestamp = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
     try:
@@ -29,8 +27,7 @@ async def webhook(request: Request):
         acaoEncontrada = detectarAcao(textoAcao)
         contadores[acaoEncontrada] += 1
         contadores["contadorGeral"] += 1
-        print(contador_somar)
-        contador_somar += 1
+        state.contador_sessao_atual += 1
         ultimo_webhook = {
             "timestamp": timestamp,
             "acao": capitalizarAcao(acaoEncontrada),

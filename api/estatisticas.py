@@ -6,7 +6,6 @@ from pathlib import Path
 from fastapi.templating import Jinja2Templates
 from core.utils import remover_acentos
 from core.state import contadores, client_queues
-from api.webhook import contador_sessao_atual
 
 app = FastAPI(
     title="Webhook Contador",

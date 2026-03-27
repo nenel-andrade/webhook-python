@@ -3,14 +3,131 @@
 {% block title %}🗒 Contadores{% endblock %}
 
 {% block content %}
-    <h1> 🗒 Contadores de Ações </h1>
+<div class="stats-container">
+    <h1>🗒 Contadores de Ações</h1>
     
-    <p><strong>Total de requisições (geral):</strong> {{ contadores.contadorGeral }}</p>
-    <p><strong>Nesta sessão:</strong> {{ contador_sessao_atual }}</p>
+    <div class="main-stats">
+        <div class="stat-card highlight">
+            <h3>Total Geral</h3>
+            <div class="number">{{ contadores.contadorGeral }}</div>
+        </div>
+        <div class="stat-card highlight">
+            <h3>Nesta Sessão</h3>
+            <div class="number">{{ contador_sessao_atual }}</div>
+        </div>
+    </div>
+
+    <h2 style="margin-top: 2rem; color: var(--text-primary);">Por Status</h2>
     
-    <p>Aprovados: <strong>{{ contadores.aprovado }}</strong></p>
-    <p>Reprovados: <strong>{{ contadores.reprovado }}</strong></p>
-    <p>Derivações: <strong>{{ contadores.derivacao }}</strong></p>
-    <p>Pendências: <strong>{{ contadores.pendencia }}</strong></p>
-    <p>Não mapeados: <strong>{{ contadores.nao_mapeado }}</strong></p>
+    <div class="actions-grid">
+        <div class="stat-card success">
+            <h3>Aprovados</h3>
+            <div class="number">{{ contadores.aprovado }}</div>
+        </div>
+        <div class="stat-card danger">
+            <h3>Reprovados</h3>
+            <div class="number">{{ contadores.reprovado }}</div>
+        </div>
+        <div class="stat-card warning">
+            <h3>Pendências</h3>
+            <div class="number">{{ contadores.pendencia }}</div>
+        </div>
+        <div class="stat-card derivacao">
+            <h3>Derivações</h3>
+            <div class="number">{{ contadores.derivacao }}</div>
+        </div>
+        <div class="stat-card neutral">
+            <h3>Não Mapeados</h3>
+            <div class="number">{{ contadores.nao_mapeado }}</div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<style>
+    .stats-container { margin-top: 1rem; }
+    
+    /* Layout Flex para o topo e Grid para a base */
+    .main-stats { display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap; }
+    .main-stats .stat-card { flex: 1; min-width: 250px; }
+    
+    .actions-grid { 
+        display: grid; 
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); 
+        gap: 1rem; 
+        margin-top: 1rem; 
+    }
+    
+    /* Estilo base do Card */
+    .stat-card {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 1.5rem;
+        text-align: center;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        transition: transform 0.2s;
+    }
+    .stat-card:hover { transform: translateY(-5px); }
+    
+    .stat-card h3 { font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 1px; }
+    .stat-card .number { font-size: 2.5rem; font-weight: bold; color: var(--text-primary); transition: color 0.3s; }
+    
+    /* Cores das bordas usando as suas variáveis do base.html */
+    .stat-card.highlight { border-top: 4px solid var(--accent); }
+    .stat-card.highlight .number { color: var(--accent); }
+    
+    .stat-card.success { border-top: 4px solid var(--success); }
+    .stat-card.success .number { color: var(--success); }
+    
+    .stat-card.danger { border-top: 4px solid var(--danger); }
+    .stat-card.danger .number { color: var(--danger); }
+    
+    .stat-card.warning { border-top: 4px solid var(--warning); }
+    .stat-card.warning .number { color: var(--warning); }
+    
+    .stat-card.derivacao { border-top: 4px solid #a371f7; } /* Um roxo estilo GitHub */
+    .stat-card.derivacao .number { color: #a371f7; }
+    
+    .stat-card.neutral { border-top: 4px solid #8b949e; }
+    
+    /* Efeito de "Pulso" quando o número atualiza */
+    .pulse-update { animation: pulse 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) both; }
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.15); color: #fff; text-shadow: 0 0 10px rgba(255,255,255,0.5); }
+        100% { transform: scale(1); }
+    }
+</style>
+
+<script>
+    // Conecta na mesma rota SSE!
+    const eventSource = new EventSource('/stream');
+
+    eventSource.onmessage = function(event) {
+        console.log('Webhook detectado! Atualizando contadores...');
+        
+        fetch(window.location.href)
+            .then(response => response.text())
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                
+                const mainContent = document.querySelector('.stats-container');
+                const newMainContent = doc.querySelector('.stats-container');
+                
+                if(mainContent && newMainContent) {
+                    mainContent.innerHTML = newMainContent.innerHTML;
+                    
+                    // Faz todos os números "pulsarem" levemente para mostrar que mudaram
+                    document.querySelectorAll('.number').forEach(el => {
+                        el.classList.add('pulse-update');
+                        setTimeout(() => el.classList.remove('pulse-update'), 600);
+                    });
+                }
+            })
+            .catch(err => console.error('Erro ao atualizar contadores:', err));
+    };
+</script>
 {% endblock %}
