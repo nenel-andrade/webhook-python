@@ -3,6 +3,7 @@ import json
 import requests
 from .state import contadores, acoes_lista, campos_acao 
 from core import state
+from datetime import datetime
 
 def contador_atual():
     if state.contador_sessao_atual == 0:
@@ -78,3 +79,33 @@ def detectarAcao(acaoRecebida: str)-> str:
         if item["match"] in acao_normalizada:
             return item["contador"]
     return "nao_mapeado"
+
+def registrar_log(mensagem: str, nivel: str = "INFO"):
+    """
+    Grava o log na memória para a interface web e também printa no terminal.
+    Níveis sugeridos: INFO, SUCESSO, AVISO, ERRO, SEGURANCA
+    """
+    timestamp = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    icones = {
+        "INFO": "ℹ️",
+        "SUCESSO": "✅",
+        "AVISO": "⚠️",
+        "ERRO": "❌",
+        "SEGURANCA": "🔐"
+    }
+    icone = icones.get(nivel, "📌")
+    
+    print(f"[{timestamp}] {icone} {nivel}: {mensagem}")
+    
+    log_entry = {
+        "timestamp": timestamp,
+        "nivel": nivel,
+        "mensagem": mensagem,
+        "icone": icone
+    }
+    
+    state.sistema_logs.insert(0, log_entry)
+    
+    # Limpa os logs muito antigos
+    if len(state.sistema_logs) > state.LIMITE_LOGS:
+        state.sistema_logs.pop()

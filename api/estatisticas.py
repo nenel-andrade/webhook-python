@@ -14,8 +14,8 @@ app = FastAPI(
 )
 
 router = APIRouter(
-    prefix="/estatisticas",           # prefixo opcional para todas as rotas desse router
-    tags=["estatisticas"],            # aparece bonitinho no Swagger
+    prefix="/estatisticas",
+    tags=["estatisticas"],
     responses={404: {"description": "Não encontrado"}}
 )
 
