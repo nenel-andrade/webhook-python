@@ -47,7 +47,6 @@ def capitalizarAcao(texto: str) -> str:
     return "Texto inválido"
 
 def carregarContadores():
-    global contadores
     try:
         if state.ARQUIVOCONTADORES.exists():
             with state.ARQUIVOCONTADORES.open(encoding="utf-8") as f:

@@ -53,8 +53,8 @@ async def verificar_token(request: Request):
 
     token = auth_header.split(" ")[1]
     if token != TOKEN_SECRETO:
-        print(f"❌ FALHA: O token recebido ('{token}') é diferente do TOKEN_SECRETO.")
-        registrar_log(f"Token incorreto,token recebido {token}","ERRO")
+        print(f"❌ FALHA: O token recebido é diferente do TOKEN_SECRETO.")
+        registrar_log("Token incorreto", "ERRO")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token incorreto"
@@ -71,7 +71,6 @@ router = APIRouter(
 )
 ultimo_webhook = None
 horario_recebido = None
-@router.post("/", response_class=PlainTextResponse)
 @router.api_route("/", methods=["GET", "POST", "PUT", "PATCH"], response_class=PlainTextResponse)
 async def webhook(request: Request, db: Session = Depends(get_db)):
     global client_queues
@@ -109,8 +108,6 @@ async def webhook(request: Request, db: Session = Depends(get_db)):
             "payload": body,
             "metodo": request.method  
         }
-        for q in client_queues:
-            await q.put(ultimo_webhook["payload"])
         registrar_log("Webhook processado","INFO")
         print(f"Webhook processado às: {timestamp}")
         print(f"Payload final: {body}")
@@ -136,13 +133,10 @@ async def webhook(request: Request, db: Session = Depends(get_db)):
         return f"Retorno recebido com sucesso via {request.method} às: {timestamp}"
         
     except Exception as e:
+        db.rollback()
         print(f"❌ Erro ao processar: {e}")
         registrar_log("Erro no processamento do webhook","ERROR")
         return PlainTextResponse(f"Erro no processamento do webhook", status_code=400)
-        
-    except Exception as f:
-        db.rollback()
-        raise f
     
 @router.get("/ultimo", response_class=HTMLResponse)
 async def ultimo(request: Request):
@@ -203,9 +197,6 @@ async def webhook_protegido(request: Request, db: Session = Depends(get_db)):
             "payload": body,
             "metodo": "POST (SECURE)"
         }
-        for q in client_queues:
-            await q.put(ultimo_webhook["payload"])
-            
         print("\n✅ Webhook seguro processado com sucesso.")
         print("="*52 + "\n")
         novo_registro = WebhookModel(
@@ -227,11 +218,9 @@ async def webhook_protegido(request: Request, db: Session = Depends(get_db)):
         print("⚠️ Erro: Payload seguro não é um JSON válido.")
         return PlainTextResponse("JSON inválido", status_code=400)
     except Exception as e:
+        db.rollback()
         print(f"❌ Erro interno na rota segura: {e}")
         return PlainTextResponse("Erro no processamento", status_code=500)
-    except Exception as f:
-        db.rollback() 
-        raise f
     
 @router.get("/historico", response_class=HTMLResponse)
 async def ver_historico(request: Request, db: Session = Depends(get_db)):

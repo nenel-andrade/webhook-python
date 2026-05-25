@@ -29,4 +29,4 @@ acoes_lista = [
 ]
 
 sistema_logs = []
-LIMITE_LOGS = 200 # Guarda os últimos 200 eventos para não estourar a memória
+LIMITE_LOGS = 200 
