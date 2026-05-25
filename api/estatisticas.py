@@ -1,17 +1,10 @@
-from fastapi import APIRouter, Request, FastAPI
+from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
 from datetime import datetime
-from fastapi.responses import PlainTextResponse
-from pathlib import Path
 from fastapi.templating import Jinja2Templates
 from core.utils import remover_acentos
 from core.state import contadores, client_queues
-
-app = FastAPI(
-    title="Webhook Contador",
-    description="Contador de ações de webhook",
-    version="0.2.0"
-)
+from core import state
 
 router = APIRouter(
     prefix="/estatisticas",
@@ -20,15 +13,22 @@ router = APIRouter(
 )
 
 templates = Jinja2Templates(directory="templates")
-@router.get("/estatisticas", response_class=HTMLResponse)
+
+ACOES = ["aprovado", "reprovado", "derivacao", "pendencia", "nao_mapeado"]
+
+@router.get("/", response_class=HTMLResponse)
 async def stats(request: Request):
-    timestamp_atual = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    total = contadores["contadorGeral"]
+    percentuais = {
+        acao: round(contadores[acao] / total * 100, 1) if total > 0 else 0
+        for acao in ACOES
+    }
     return templates.TemplateResponse(
-        "estatisticas.html",
-        {
-            "request": request,
+        request=request,
+        name="estatisticas.html",
+        context={
             "contadores": contadores,
-            "contador_sessao_atual": contador_sessao_atual,
-            "timestamp_atual": timestamp_atual
+            "percentuais": percentuais,
+            "timestamp_atual": datetime.now().strftime("%d/%m/%Y %H:%M:%S")
         }
     )

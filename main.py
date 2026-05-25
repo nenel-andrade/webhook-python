@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 from api.webhook import router as webhook_router
 from api.dashboard import router as dashboard_router
 from api.contadores import router as contadores_router
+from api.estatisticas import router as estatisticas_router
 
 from core.utils import carregarContadores, salvarContadores, contador_atual, obter_url_ngrok
 
@@ -38,3 +39,4 @@ app = FastAPI(
 app.include_router(dashboard_router)
 app.include_router(webhook_router)
 app.include_router(contadores_router)
+app.include_router(estatisticas_router)

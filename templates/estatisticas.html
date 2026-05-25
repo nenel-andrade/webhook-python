@@ -3,21 +3,152 @@
 {% block title %}📊 Estatísticas{% endblock %}
 
 {% block content %}
-    <h1>Bar Chart HTML</h1>
+<div class="estat-container">
+    <h1>📊 Estatísticas de Ações</h1>
 
-    <div class="chart-wrap vertical">
-    <h2 class="title">Bar Chart HTML Example:  Using Only HTML And CSS</h2>
-        <div class="grid">
-            <div class="bar" style="--bar-value:85%;" data-name="Your Blog" title="Your Blog 85%"></div>
-            <div class="bar" style="--bar-value:23%;" data-name="Medium" title="Medium 23%"></div>
-            <div class="bar" style="--bar-value:7%;" data-name="Tumblr" title="Tumblr 7%"></div>
-            <div class="bar" style="--bar-value:38%;" data-name="Facebook" title="Facebook 38%"></div>
-            <div class="bar" style="--bar-value:35%;" data-name="YouTube" title="YouTube 35%"></div>
-            <div class="bar" style="--bar-value:30%;" data-name="LinkedIn" title="LinkedIn 30%"></div>
-            <div class="bar" style="--bar-value:5%;" data-name="Twitter" title="Twitter 5%"></div>
-            <div class="bar" style="--bar-value:20%;" data-name="Other" title="Other 20%"></div>    
-        </div>
-        <!-- TODO criar o grafico corretamente -->
+    <div class="total-card">
+        <span class="total-label">Total de webhooks processados</span>
+        <span class="total-number">{{ contadores.contadorGeral }}</span>
     </div>
 
+    {% if contadores.contadorGeral == 0 %}
+    <p class="empty-state">Nenhum webhook recebido ainda. Os gráficos aparecerão assim que o primeiro chegar.</p>
+    {% else %}
+    <div class="bars-list">
+
+        <div class="bar-row">
+            <span class="bar-label">Aprovados</span>
+            <div class="bar-track">
+                <div class="bar-fill success" style="width: {{ percentuais.aprovado }}%"></div>
+            </div>
+            <span class="bar-stats">{{ contadores.aprovado }} <em>{{ percentuais.aprovado }}%</em></span>
+        </div>
+
+        <div class="bar-row">
+            <span class="bar-label">Reprovados</span>
+            <div class="bar-track">
+                <div class="bar-fill danger" style="width: {{ percentuais.reprovado }}%"></div>
+            </div>
+            <span class="bar-stats">{{ contadores.reprovado }} <em>{{ percentuais.reprovado }}%</em></span>
+        </div>
+
+        <div class="bar-row">
+            <span class="bar-label">Derivações</span>
+            <div class="bar-track">
+                <div class="bar-fill derivacao" style="width: {{ percentuais.derivacao }}%"></div>
+            </div>
+            <span class="bar-stats">{{ contadores.derivacao }} <em>{{ percentuais.derivacao }}%</em></span>
+        </div>
+
+        <div class="bar-row">
+            <span class="bar-label">Pendências</span>
+            <div class="bar-track">
+                <div class="bar-fill warning" style="width: {{ percentuais.pendencia }}%"></div>
+            </div>
+            <span class="bar-stats">{{ contadores.pendencia }} <em>{{ percentuais.pendencia }}%</em></span>
+        </div>
+
+        <div class="bar-row">
+            <span class="bar-label">Não Mapeados</span>
+            <div class="bar-track">
+                <div class="bar-fill neutral" style="width: {{ percentuais.nao_mapeado }}%"></div>
+            </div>
+            <span class="bar-stats">{{ contadores.nao_mapeado }} <em>{{ percentuais.nao_mapeado }}%</em></span>
+        </div>
+
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<style>
+    .estat-container { margin-top: 1rem; }
+
+    h1 { margin-bottom: 1.5rem; }
+
+    .total-card {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border);
+        border-top: 4px solid var(--accent);
+        border-radius: 8px;
+        padding: 1.25rem 1.75rem;
+        margin-bottom: 2rem;
+    }
+    .total-label { color: var(--text-secondary); font-size: 0.95rem; text-transform: uppercase; letter-spacing: 1px; }
+    .total-number { font-size: 2.5rem; font-weight: bold; color: var(--accent); }
+
+    .empty-state {
+        text-align: center;
+        color: var(--text-secondary);
+        padding: 3rem 0;
+        font-size: 1rem;
+    }
+
+    .bars-list { display: flex; flex-direction: column; gap: 1.25rem; }
+
+    .bar-row {
+        display: grid;
+        grid-template-columns: 130px 1fr 90px;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .bar-label {
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+        text-align: right;
+        white-space: nowrap;
+    }
+
+    .bar-track {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        height: 28px;
+        overflow: hidden;
+    }
+
+    .bar-fill {
+        height: 100%;
+        border-radius: 4px;
+        min-width: 2px;
+        transition: width 0.6s ease;
+    }
+
+    .bar-fill.success  { background: var(--success); }
+    .bar-fill.danger   { background: var(--danger); }
+    .bar-fill.warning  { background: var(--warning); }
+    .bar-fill.derivacao { background: #a371f7; }
+    .bar-fill.neutral  { background: var(--text-secondary); }
+
+    .bar-stats {
+        font-size: 0.9rem;
+        color: var(--text-primary);
+        white-space: nowrap;
+    }
+    .bar-stats em {
+        font-style: normal;
+        color: var(--text-secondary);
+        margin-left: 0.4rem;
+    }
+</style>
+
+<script>
+    const eventSource = new EventSource('/stream');
+
+    eventSource.onmessage = function() {
+        fetch(window.location.href)
+            .then(r => r.text())
+            .then(html => {
+                const doc = new DOMParser().parseFromString(html, 'text/html');
+                const novo = doc.querySelector('.estat-container');
+                const atual = document.querySelector('.estat-container');
+                if (novo && atual) atual.innerHTML = novo.innerHTML;
+            });
+    };
+</script>
 {% endblock %}
